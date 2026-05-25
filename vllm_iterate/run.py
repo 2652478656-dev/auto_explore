@@ -206,6 +206,49 @@ def main():
         print(vllm_inputs[0]["prompt"][:200] + "...")
 
     print("\n" + "=" * 70)
+    print("Step 3b: Synthetic JIT warmup (untimed)")
+    print("=" * 70)
+    try:
+        warmup_instruction = "Synthetic warmup."
+        warmup_text_short = "warmup"
+        warmup_text_medium = "the quick brown fox " * 8
+        warmup_text_long = "lorem ipsum dolor sit amet " * 40
+        warmup_text_lengths = [warmup_text_short, warmup_text_medium, warmup_text_long]
+
+        warmup_specs = []
+        # 3 text-only specs
+        for _wt in warmup_text_lengths:
+            warmup_specs.append(
+                {
+                    "text": _wt,
+                    "image": None,
+                    "instruction": warmup_instruction,
+                }
+            )
+        # 6 text+image specs over 3 sizes x 2 text lengths
+        warmup_image_sizes = [(224, 224), (448, 336), (672, 504)]
+        warmup_image_text_lengths = [warmup_text_short, warmup_text_medium]
+        _warmup_rng = np.random.RandomState(0)
+        for _w_h, _w_w in warmup_image_sizes:
+            for _wt in warmup_image_text_lengths:
+                _noise = _warmup_rng.randint(0, 256, size=(_w_h, _w_w, 3), dtype=np.uint8)
+                _img = Image.fromarray(_noise)
+                warmup_specs.append(
+                    {
+                        "text": _wt,
+                        "image": _img,
+                        "instruction": warmup_instruction,
+                    }
+                )
+
+        warmup_vllm_inputs = [prepare_vllm_inputs(s, llm) for s in warmup_specs]
+        print(f"Running synthetic warmup on {len(warmup_vllm_inputs)} specs...")
+        _ = llm.embed(warmup_vllm_inputs)
+        print("Synthetic warmup complete.")
+    except Exception as _warmup_err:
+        print(f"Warning: synthetic JIT warmup skipped due to: {_warmup_err}")
+
+    print("\n" + "=" * 70)
     print("Step 4: Generating Embeddings")
     print("=" * 70)
     embed_start = time.perf_counter()
