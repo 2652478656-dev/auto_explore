@@ -4,12 +4,12 @@ Scratch file for the autonomous research run. Updated after every experiment.
 
 ## current best valid result
 
-- commit: `a4467c7`
-- family: `multi-replica`
-- sample/s: **9.8513** (+131.8% vs harness, +52.2% vs K6)
+- commit: `2d7dd23`
+- family: `mm-cache`
+- sample/s: **10.2972** (+142.2% vs harness, +4.5% vs K1)
 - y_cosine: 1.000000
 - memory_gb: 4.31 (per-replica)
-- note: K1 N=2 in-process LLM replicas with ThreadPoolExecutor and `[i::N]` sharding, gmu=0.45 each. Stacks with K6 warmup. APPROVE_WITH_NOTES from reviewer (gmu margin thin; N>=3 likely OOM).
+- note: G4 adds `mm_processor_cache_gb=0` and `skip_mm_profiling=True` (documented Qwen3-VL EngineArgs flags) to both K1 replicas. Stacks with K6 + K1. APPROVE_WITH_NOTES (thin gmu margin; consider capturing peak GPU mem on next run).
 
 ## active hypothesis queue (ordered)
 
@@ -77,11 +77,10 @@ After Stack A: rotate family to non-cudagraph (per anti-collapse) for next exper
 
 ## refresh counters
 
-- experiments since last `hypothesis-scout` refresh: 4 (K6, K1-crash, K1, K5-crash) — TRIGGER NOW
-- experiments since last external refresh: 4 — trigger now (last known-scout consumed)
-- consecutive non-keeps: 1 (K5 crash)
-- consecutive same-family runs: 3 (multi-replica — graveyard or rotate)
-- Trigger external research protocol now: known-scout exhausted, queue is empty, last K5 was a crash.
+- experiments since last external refresh: 2 (Stack A, G4) — refresh due in ≤4 more experiments
+- consecutive non-keeps: 0 (G4 keep recovers)
+- consecutive same-family runs: 1 (mm-cache; rotates from cudagraph→mm-cache after Stack A discard)
+- Next experiment family preference: explore a non-mm-cache axis to maintain diversity.
 
 ## interesting log signals from the harness run
 

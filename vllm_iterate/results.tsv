@@ -5,3 +5,4 @@ f0b3546	0.0000	0.000000	0.00	crash	multi-replica	K1 first attempt; gpu_memory_ut
 a4467c7	9.8513	1.000000	4.31	keep	multi-replica	K1 N=2 multi-replica ThreadPoolExecutor; gmu=0.45 each
 4208fe3	0.0000	0.000000	0.00	crash	multi-replica	K5 N=2 spawn workers; vLLM memory-profile assertion under concurrent worker init; graveyard
 593b6c4	9.9712	1.000000	4.31	discard	cudagraph	Stack A capture-ladder pin; +1.2% over K1 within noise; too complex for its gain
+2d7dd23	10.2972	1.000000	4.31	keep	mm-cache	G4 mm_processor_cache_gb=0 + skip_mm_profiling=True; +4.5% over K1
