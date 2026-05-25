@@ -62,4 +62,4 @@ The orchestrator agent topology and contract are in
 
 ## Logs
 
-All the logs are under logs/ folder
+All the logs are under [logs](logs) folder
