@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Any
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 from vllm import LLM
 from vllm.multimodal.utils import fetch_image
@@ -188,12 +189,30 @@ def main():
     print("\n" + "=" * 70)
     print("Step 2: Initializing vLLM Model")
     print("=" * 70)
-    llm = LLM(
-        model=MODEL_PATH,
-        runner="pooling",
-        dtype="bfloat16",
-        trust_remote_code=True,
-    )
+    N_REPLICAS = 2
+    llms = []
+    for _r_idx in range(N_REPLICAS):
+        try:
+            _llm = LLM(
+                model=MODEL_PATH,
+                runner="pooling",
+                dtype="bfloat16",
+                trust_remote_code=True,
+                gpu_memory_utilization=0.40,
+            )
+            llms.append(_llm)
+        except Exception as _llm_init_err:
+            if _r_idx == 0:
+                # First replica must succeed; re-raise.
+                raise
+            print(
+                f"Warning: failed to construct LLM replica {_r_idx} "
+                f"(falling back to N={_r_idx}): {_llm_init_err}"
+            )
+            break
+    N_REPLICAS = len(llms)
+    print(f"Constructed {N_REPLICAS} LLM replica(s).")
+    llm = llms[0]  # keep this binding so prepare_vllm_inputs(inp, llm) and the K6 warmup keep working byte-identically
 
     print("\n" + "=" * 70)
     print("Step 3: Preparing Inputs")
@@ -248,12 +267,33 @@ def main():
     except Exception as _warmup_err:
         print(f"Warning: synthetic JIT warmup skipped due to: {_warmup_err}")
 
+    # K1: also warm each additional replica's JIT cache to be safe.
+    for _r_idx, _replica in enumerate(llms):
+        if _replica is llm:
+            continue
+        try:
+            _ = _replica.embed(warmup_vllm_inputs)
+            print(f"Per-replica warmup complete for replica {_r_idx}.")
+        except Exception as _replica_warmup_err:
+            print(
+                f"Warning: per-replica warmup skipped for replica {_r_idx} "
+                f"due to: {_replica_warmup_err}"
+            )
+
     print("\n" + "=" * 70)
     print("Step 4: Generating Embeddings")
     print("=" * 70)
+    shards = [vllm_inputs[i::N_REPLICAS] for i in range(N_REPLICAS)]  # position-only
     embed_start = time.perf_counter()
-    outputs = llm.embed(vllm_inputs)
+    with ThreadPoolExecutor(max_workers=N_REPLICAS) as _pool:
+        shard_outputs = list(_pool.map(lambda pair: pair[0].embed(pair[1]),
+                                       list(zip(llms, shards))))
     embed_elapsed = time.perf_counter() - embed_start
+    outputs = [None] * len(vllm_inputs)
+    for r in range(N_REPLICAS):
+        for k, o in enumerate(shard_outputs[r]):
+            outputs[r + k * N_REPLICAS] = o
+    assert all(o is not None for o in outputs), "stitch produced None"
     print(f"llm.embed() elapsed: {embed_elapsed:.4f} s "
           f"({embed_elapsed * 1000 / max(len(vllm_inputs), 1):.2f} ms/sample over "
           f"{len(vllm_inputs)} samples) ")
