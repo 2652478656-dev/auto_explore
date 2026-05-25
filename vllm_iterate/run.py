@@ -198,7 +198,7 @@ def main():
                 runner="pooling",
                 dtype="bfloat16",
                 trust_remote_code=True,
-                gpu_memory_utilization=0.40,
+                gpu_memory_utilization=0.45,
             )
             llms.append(_llm)
         except Exception as _llm_init_err:
