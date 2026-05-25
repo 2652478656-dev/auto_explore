@@ -193,13 +193,30 @@ def main():
     llms = []
     for _r_idx in range(N_REPLICAS):
         try:
-            _llm = LLM(
+            # G4: mm processor cache off + skip mm profiling. 100 unique multimodal
+            # inputs make the LRU pure overhead; skipping mm-profiling recovers GPU
+            # mem and shortens init. Generic vLLM knobs documented in Qwen3-VL recipe.
+            _g4_kwargs = dict(
                 model=MODEL_PATH,
                 runner="pooling",
                 dtype="bfloat16",
                 trust_remote_code=True,
                 gpu_memory_utilization=0.45,
+                mm_processor_cache_gb=0,
+                skip_mm_profiling=True,
             )
+            try:
+                _llm = LLM(**_g4_kwargs)
+                print(f"G4: replica {_r_idx} constructed with mm cache disabled + profiling skip.")
+            except (TypeError, ValueError) as _g4_err:
+                print(f"G4: extra kwargs rejected for replica {_r_idx} ({_g4_err}); falling back.")
+                _llm = LLM(
+                    model=MODEL_PATH,
+                    runner="pooling",
+                    dtype="bfloat16",
+                    trust_remote_code=True,
+                    gpu_memory_utilization=0.45,
+                )
             llms.append(_llm)
         except Exception as _llm_init_err:
             if _r_idx == 0:
