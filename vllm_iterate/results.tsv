@@ -1,1 +1,7 @@
 commit	sample/s	y_cosine	memory_gb	status	family	description
+f53ccd8	4.2501	1.000000	4.31	keep	harness	harness reproduction; baseline copy with output paths redirected
+ce80207	6.4725	1.000000	4.31	keep	warmup	K6 synthetic JIT warmup (untimed); zero JIT events in timed pass
+f0b3546	0.0000	0.000000	0.00	crash	multi-replica	K1 first attempt; gpu_memory_utilization=0.40 -> KV cache OOM
+a4467c7	9.8513	1.000000	4.31	keep	multi-replica	K1 N=2 multi-replica ThreadPoolExecutor; gmu=0.45 each
+4208fe3	0.0000	0.000000	0.00	crash	multi-replica	K5 N=2 spawn workers; vLLM memory-profile assertion under concurrent worker init; graveyard
+593b6c4	9.9712	1.000000	4.31	discard	cudagraph	Stack A capture-ladder pin; +1.2% over K1 within noise; too complex for its gain
