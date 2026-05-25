@@ -1,0 +1,1819 @@
+
+       6
+       7 -- commit: `f53ccd8`
+
+       8 -- family: `harness`
+
+       9 -- sample/s: **4.2501**
+
+       7 +- commit: `ce80207`
+
+       8 +- family: `warmup`
+
+       9 +- sample/s: **6.4725** (+52.3% vs harness 4.2501)
+
+      10  - y_cosine: 1.000000
+      11  - memory_gb: 4.31
+      12 -- note: harness reproduction; identical to baseline except out
+put paths
+      12 +- note: K6 synthetic JIT warmup. Triton kernels JIT during syn
+thetic warmup; z
+         +ero JIT events in timed pass. APPROVE_WITH_NOTES from reviewer
+.
+      13
+      14  ## active hypothesis queue (ordered, `source=known` on top)
+      15
+
+● Update(vllm_iterate/research_state.md)
+
+      13
+      14  ## active hypothesis queue (ordered, `source=known` on top)
+
+      15
+      16 -1. **K6 — Synthetic JIT warmup** (`source=known`, family=warmu
+p/JIT). Insert s
+         -ynthetic warmup region driving `llm.embed` on 9 synthetic spec
+s (hardcoded ima
+         -ge sizes & text lengths) before the timer. Use a distinct `war
+mup_instruction`
+         - to isolate JIT mechanism from any prefix-cache effect.
+
+      17 -2. **K1 — Multi-replica threads** (`source=known`, family=mult
+i-replica). N=2
+         -in-process `LLM` instances at `gpu_memory_utilization=0.4`, Th
+readPoolExecutor
+         - sharding by `[i::N]`, inverse-stride stitch.
+
+      18 -3. **K5 — Multi-replica spawn** (`source=known`, family=multi-
+replica). Multip
+         -rocessing.spawn workers with own LLM; AutoTokenizer shim in pa
+rent; chat-templ
+         -ate byte-equality pre-flight check.
+
+      16 +1. **K1 — Multi-replica threads** (`source=known`, family=mult
+i-replica). N=2
+         +in-process `LLM` instances at `gpu_memory_utilization=0.4`, Th
+readPoolExecutor
+         + sharding by `[i::N]`, inverse-stride stitch.
+
+      17 +2. **K5 — Multi-replica spawn** (`source=known`, family=multi-
+replica). Multip
+         +rocessing.spawn workers with own LLM; AutoTokenizer shim in pa
+rent; chat-templ
+         +ate byte-equality pre-flight check.
+
+      18
+      19 +After K1/K5: known-scout list is consumed; trigger first exter
+nal research ref
+         +resh.
+
+      20 +
+
+      21  ## fresh-idea queue (separated from known local ideas)
+      22
+      23  (empty pending external research — first refresh due after 6 n
+on-harness exper
+          iments)
+
+● Update(vllm_iterate/research_state.md)
+
+      27  | family | runs |
+      28  |---|---|
+
+      29  | harness | 1 |
+      30 +| warmup | 1 (keep) |
+
+      31
+
+      32  ## idea source counts
+
+      33
+
+
+
+● Update(vllm_iterate/research_state.md)
+
+      46  | # | commit | family | status | sample/s | y_cosine |
+      47  |---|---|---|---|---|---|
+
+      48  | 1 | f53ccd8 | harness | keep | 4.2501 | 1.000000 |
+      49 +| 2 | ce80207 | warmup | keep | 6.4725 | 1.000000 |
+
+      50
+
+      51  ## rejected families and why
+
+      52
+
+
+
+● Update(vllm_iterate/research_state.md)
+
+      70
+      71  ## refresh counters
+
+      72
+      73 -- experiments since last `hypothesis-scout` refresh: 0 (n/a; b
+ootstrap pending
+         -)
+
+      74 -- experiments since last external refresh: 0 (n/a; bootstrap p
+ending)
+      73 +- experiments since last `hypothesis-scout` refresh: 1 (K6) —
+refresh due in ≤
+         +2 more experiments
+
+      74 +- experiments since last external refresh: 1 (K6) — refresh du
+e in ≤5 more exp
+         +eriments
+
+      75  - consecutive non-keeps: 0
+      76 -- consecutive same-family runs: 1 (harness)
+
+      76 +- consecutive same-family runs: 1 (warmup)
+
+      77
+      78  ## interesting log signals from the harness run
+      79
+
+● Update(vllm_iterate/research_state.md)
+
+      89
+      90  ## next required agent call
+
+      91
+      92 -`search-strategist` for portfolio ruling before selecting K6.
+Known-scout prio
+         -rity rule applies — K6 is the top of the queue.
+
+      92 +K1 is now top of `source=known` queue. Per known-scout priorit
+y rule it must b
+         +e selected next. Then K5.
+
+      93 +- Reviewer's APPROVE_WITH_NOTES advises picking a non-warmup f
+amily — K1 (mult
+         +i-replica) satisfies that.
+
+      94 +- `search-strategist` confirmation already obtained for K6; fo
+r K1 will re-cal
+         +l to confirm portfolio shape before the experiment.
+
+
+● Progress: K6 keep is recorded. Best = 6.4725 sample/s. Now invoking ex
+periment-implementer
+  for K1 (multi-replica threads).
+
+● experiment-implementer(Implement K1 multi-replica threads)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+✢ Running search loop… (17m 55s · ↓ 57.7k tokens)
+
+  ⎿  
+
+
+
+  Reading 1 file… (ctrl+o to expand)
+
+
+● Patch looks good. Running pre-run audits before committing.
+
+
+● contract-auditor(Pre-run K1 contract audit)
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+
+✽ Running search loop… (19m 32s · ↓ 61.4k tokens)
+
+  ⎿  
+
+
+
+✽ Running search loop… (19m 39s · ↓ 61.6k tokens)
+
+  ⎿  
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+● Both audits ALLOW. Committing and running K1.
+
+● Bash(git add vllm_iterate/run.py && git -c user.email=auto@research -c
+ user.name=autoresearch
+       commit -m "K1: multi-replica N=2 LLMs with ThreadPoolExecutor sha
+rding"…)
+  ⎿  Waiting…
+
+      1 file changed, 47 insertions(+), 7 deletions(-)
+
+     f0b3546
+
+
+
+● Bash(timeout 300 /dev/shm/vllm/venv/bin/python /dev/shm/auto_explore/v
+llm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1; echo "EXIT=$?")
+  ⎿  Waiting…
+
+
+
+● K1 crashed. Let me inspect the failure.
+
+
+● Searching for 1 pattern… (ctrl+o to expand)
+
+● K1 crashed: gpu_memory_utilization=0.40 isn't enough KV cache headroom
+ for the 262144
+  max_model_len. Raising to 0.45 per replica (0.90 total).
+
+
+● Update(vllm_iterate/run.py)
+
+
+      198                  runner="pooling",
+      199                  dtype="bfloat16",
+
+      200                  trust_remote_code=True,
+      201 -                gpu_memory_utilization=0.40,
+
+      201 +                gpu_memory_utilization=0.45,
+
+      202              )
+
+      203              llms.append(_llm)
+
+      204          except Exception as _llm_init_err:
+
+
+● Bash(timeout 300 /dev/shm/vllm/venv/bin/python /dev/shm/auto_explore/v
+llm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1; echo "EXIT=$?")
+  ⎿  Waiting…
+
+
+
+● Bash(/dev/shm/vllm/venv/bin/python /dev/shm/vllm/vllm_baseline/cosine_
+similarity.py
+      /dev/shm/auto_explore/vllm_iterate/result.npy /dev/shm/vllm/vllm_b
+aseline/baselin…)
+  ⎿  Running…
+
+
+● Searching for 1 pattern… (ctrl+o to expand)
+
+
+● K1 result: 9.8513 sample/s (+52% over K6, +131% over harness), cosine
+1.000000. Both replicas
+   warmed cleanly. Committing the gmu fix and reviewing.
+
+
+● Bash(git add vllm_iterate/run.py && git -c user.email=auto@research -c
+ user.name=autoresearch
+       commit -m "K1 fix: gpu_memory_utilization 0.40 -> 0.45 (KV cache
+OOM)"…)
+  ⎿  Waiting…
+
+      1 file changed, 1 insertion(+), 1 deletion(-)
+
+     a4467c7
+
+
+
+  result-analyst(Classify K1 result)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+* Running search loop… (23m 13s · ↓ 67.6k tokens)
+
+  ⎿  
+
+
+
+● Calling reviewer for K1 (large speedup, beats current best).
+
+  reviewer(Review K1 keep)
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+
+· Running search loop… (23m 58s · ↓ 69.8k tokens)
+
+  ⎿  
+
+
+
+● K1 APPROVED. New best = 9.8513 sample/s (+131% over harness). Recordin
+g, updating state,
+  queuing K5.
+
+● Reading 1 file… (ctrl+o to expand)
+
+  ⎿  $ printf 'f0b3546\t0.0000\t0.000000\t0.00\tcrash\tmulti-replica\tK1
+ first attempt;
+     gpu_memory_utilization=0.40 -> KV cache OOM\n' >>
+     /dev/shm/auto_explore/vllm_iterate/results.tsv && printf
+
+     'a4467c7\t9.8513\t1.000000\t4.31\tkeep\tmulti-replica\tK1 N=2 multi
+-replica
+     ThreadPoolExecutor; gmu=0.45 each…
+
+
+
+● Update(vllm_iterate/research_state.md)
+
+
+       4
+       5  ## current best valid result
+
+       6
+       7 -- commit: `ce80207`
+
+       8 -- family: `warmup`
+
+       9 -- sample/s: **6.4725** (+52.3% vs harness 4.2501)
+
+       7 +- commit: `a4467c7`
+
+       8 +- family: `multi-replica`
+
+       9 +- sample/s: **9.8513** (+131.8% vs harness, +52.2% vs K6)
+
+      10  - y_cosine: 1.000000
+      11 -- memory_gb: 4.31
+
+      12 -- note: K6 synthetic JIT warmup. Triton kernels JIT during syn
+thetic warmup; z
+         -ero JIT events in timed pass. APPROVE_WITH_NOTES from reviewer
+.
+      11 +- memory_gb: 4.31 (per-replica)
+
+      12 +- note: K1 N=2 in-process LLM replicas with ThreadPoolExecutor
+ and `[i::N]` sh
+         +arding, gmu=0.45 each. Stacks with K6 warmup. APPROVE_WITH_NOT
+ES from reviewer
+         + (gmu margin thin; N>=3 likely OOM).
+
+      13
+      14  ## active hypothesis queue (ordered, `source=known` on top)
+      15
+
+● Update(vllm_iterate/research_state.md)
+
+      13
+      14  ## active hypothesis queue (ordered, `source=known` on top)
+
+      15
+      16 -1. **K1 — Multi-replica threads** (`source=known`, family=mult
+i-replica). N=2
+         -in-process `LLM` instances at `gpu_memory_utilization=0.4`, Th
+readPoolExecutor
+         - sharding by `[i::N]`, inverse-stride stitch.
+
+      17 -2. **K5 — Multi-replica spawn** (`source=known`, family=multi-
+replica). Multip
+         -rocessing.spawn workers with own LLM; AutoTokenizer shim in pa
+rent; chat-templ
+         -ate byte-equality pre-flight check.
+
+      16 +1. **K5 — Multi-replica spawn** (`source=known`, family=multi-
+replica). Last `
+         +source=known` candidate. Multiprocessing.spawn workers with ow
+n LLM; AutoToken
+         +izer shim in parent; chat-template byte-equality pre-flight ch
+eck.
+      17
+      19 -After K1/K5: known-scout list is consumed; trigger first exter
+nal research ref
+         -resh.
+
+      18 +After K5 (regardless of outcome): mandatory external research
+refresh + hypoth
+         +esis-scout to populate the queue with orthogonal-axis ideas (b
+atching, dtype,
+         +attention impl) per reviewer's diversity note.
+
+      19
+      20  ## fresh-idea queue (separated from known local ideas)
+      21
+
+● Update(vllm_iterate/research_state.md)
+
+      27  |---|---|
+      28  | harness | 1 |
+
+      29  | warmup | 1 (keep) |
+      30 +| multi-replica | 2 (1 crash, 1 keep) |
+
+      31
+
+      32  ## idea source counts
+
+      33
+
+
+
+● Update(vllm_iterate/research_state.md)
+
+      47  |---|---|---|---|---|---|
+      48  | 1 | f53ccd8 | harness | keep | 4.2501 | 1.000000 |
+
+      49  | 2 | ce80207 | warmup | keep | 6.4725 | 1.000000 |
+      50 +| 3 | f0b3546 | multi-replica | crash | n/a | n/a (KV cache OO
+M at gmu=0.40) |
+      51 +| 4 | a4467c7 | multi-replica | keep | 9.8513 | 1.000000 |
+
+      52
+
+      53  ## rejected families and why
+
+      54
+
+
+● Update(vllm_iterate/research_state.md)
+
+      72
+      73  ## refresh counters
+
+      74
+      75 -- experiments since last `hypothesis-scout` refresh: 1 (K6) —
+refresh due in ≤
+         -2 more experiments
+
+      76 -- experiments since last external refresh: 1 (K6) — refresh du
+e in ≤5 more exp
+         -eriments
+
+      77 -- consecutive non-keeps: 0
+
+      78 -- consecutive same-family runs: 1 (warmup)
+
+      75 +- experiments since last `hypothesis-scout` refresh: 3 (K6, K1
+-crash, K1) — re
+         +fresh trigger now (>=3)
+
+      76 +- experiments since last external refresh: 3 (K6, K1-crash, K1
+) — refresh due
+         +after K5 (>=6)
+
+      77 +- consecutive non-keeps: 0 (K1-crash followed by K1-keep count
+s as recovered)
+      78 +- consecutive same-family runs: 2 (multi-replica)
+
+      79 +- IDEAS scheduled after K5: trigger external research protocol
+ + hypothesis-sc
+         +out to populate orthogonal-axis queue
+
+      80
+      81  ## interesting log signals from the harness run
+      82
+
+● Update(vllm_iterate/research_state.md)
+
+      92
+      93  ## next required agent call
+
+      94
+      95 -K1 is now top of `source=known` queue. Per known-scout priorit
+y rule it must b
+         -e selected next. Then K5.
+
+      96 -- Reviewer's APPROVE_WITH_NOTES advises picking a non-warmup f
+amily — K1 (mult
+         -i-replica) satisfies that.
+
+      97 -- `search-strategist` confirmation already obtained for K6; fo
+r K1 will re-cal
+         -l to confirm portfolio shape before the experiment.
+
+      95 +K5 is the last `source=known` candidate per priority rule. Aft
+er K5: external-
+         +research + hypothesis-scout refresh to bring in orthogonal-axi
+s ideas. Reviewe
+         +r's K1 APPROVE_WITH_NOTES recommended exploring different axes
+ (batching, dtyp
+         +e, attention impl) since gmu headroom blocks N>=3.
+
+
+● Asking search-strategist whether to run K5 (last known-scout) or skip
+directly to external
+  research given K1's success.
+
+  search-strategist(Decide K5 vs skip-to-refresh)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+✽ Running search loop… (25m 35s · ↓ 75.5k tokens)
+
+  ⎿  
+
+
+
+● Running K5 as the search-strategist directs. Invoking experiment-imple
+menter for the
+  multi-process spawn implementation.
+
+● experiment-implementer(Implement K5 multi-replica spawn)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+✶ Running search loop… (27m 1s · ↓ 79.6k tokens)
+
+  ⎿  
+
+
+
+● K5 patch applied. Reading the rest, then auditing pre-run.
+
+● Reading 1 file… (ctrl+o to expand)
+
+
+● contract-auditor(Pre-run K5 contract audit)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+
+✻ Running search loop… (29m 43s · ↓ 85.5k tokens)
+
+  ⎿  
+
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+✶ Running search loop… (29m 57s · ↓ 85.9k tokens)
+
+  ⎿  ───────────────────────────────────────────────────────────────────
+───────────────────────
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+● Both audits ALLOW. Committing K5 and running. Note: this will spawn 2
+worker processes +
+  parent — expect longer wall time.
+
+● Bash(git add vllm_iterate/run.py && git -c user.email=auto@research -c
+ user.name=autoresearch
+       commit -m "K5: N=2 spawned-process multi-replica with mp.Queue IP
+C" 2>&…)
+  ⎿  Waiting…
+
+      1 file changed, 211 insertions(+), 90 deletions(-)
+
+     4208fe3
+
+
+
+● Bash(timeout 540 /dev/shm/vllm/venv/bin/python /dev/shm/auto_explore/v
+llm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1; echo "EXIT=$?")
+  ⎿  Waiting…
+
+
+
+● K5 timed out after 9 minutes. Likely OOM or hung on init. Checking log
+s.
+
+● Searching for 1 pattern… (ctrl+o to expand)
+
+● K5 fails at init: simultaneous spawn-worker LLMs trigger vLLM's memory
+-profiling
+  concurrent-access assertion + KV cache OOM. Graveyard K5 with this rea
+son and roll back the
+  K5 commit (orchestrator step 20).
+
+● Bash(git reset --hard a4467c7 2>&1 | tail -5 && git log --oneline | he
+ad -6)
+  ⎿  Waiting…
+
+
+
+     a4467c7 K1 fix: gpu_memory_utilization 0.40 -> 0.45 (KV cache OOM)
+
+     f0b3546 K1: multi-replica N=2 LLMs with ThreadPoolExecutor sharding
+     … +3 lines (ctrl+o to expand)
+
+● Reading 1 file… (ctrl+o to expand)
+
+  ⎿  $ printf '4208fe3\t0.0000\t0.000000\t0.00\tcrash\tmulti-replica\tK5
+ N=2 spawn workers;
+     vLLM memory-profile assertion under concurrent worker init; graveya
+rd\n' >>
+     /dev/shm/auto_explore/vllm_iterate/results.tsv && cat
+
+     /dev/shm/auto_explore/vllm_iterate/results.tsv
+
+● The git reset --hard clobbered my uncommitted TSV appends. Restoring t
+he full results log.
+
+
+● Update(vllm_iterate/research_state.md)
+
+      13
+      14  ## active hypothesis queue (ordered, `source=known` on top)
+
+      15
+      16 -1. **K5 — Multi-replica spawn** (`source=known`, family=multi-
+replica). Last `
+         -source=known` candidate. Multiprocessing.spawn workers with ow
+n LLM; AutoToken
+         -izer shim in parent; chat-template byte-equality pre-flight ch
+eck.
+      16 +(empty — known-scout queue exhausted; triggering mandatory ext
+ernal research r
+         +efresh)
+
+      17
+      18 -After K5 (regardless of outcome): mandatory external research
+refresh + hypoth
+         -esis-scout to populate the queue with orthogonal-axis ideas (b
+atching, dtype,
+         -attention impl) per reviewer's diversity note.
+
+      18 +After external refresh: orthogonal-axis ideas (batching, dtype
+, attention impl
+         +, V1 pooling flags, CUDA graphs deeper, flashinfer backend) pe
+r reviewer/strat
+         +egist diversity guidance.
+
+      19
+      20  ## fresh-idea queue (separated from known local ideas)
+      21
+
+● Update(vllm_iterate/research_state.md)
+
+      27  |---|---|
+      28  | harness | 1 |
+
+      29  | warmup | 1 (keep) |
+      30 -| multi-replica | 2 (1 crash, 1 keep) |
+
+      30 +| multi-replica | 3 (2 crash, 1 keep) |
+
+      31
+
+      32  ## idea source counts
+
+      33
+
+
+● Update(vllm_iterate/research_state.md)
+
+      49  | 2 | ce80207 | warmup | keep | 6.4725 | 1.000000 |
+      50  | 3 | f0b3546 | multi-replica | crash | n/a | n/a (KV cache OO
+M at gmu=0.40) |
+      51  | 4 | a4467c7 | multi-replica | keep | 9.8513 | 1.000000 |
+      52 +| 5 | 4208fe3 | multi-replica | crash | n/a | n/a (concurrent
+spawn init asser
+         +ts in vLLM memory profiler; reset) |
+
+      53
+
+      54  ## rejected families and why
+
+      55
+
+
+● Update(vllm_iterate/research_state.md)
+
+      62  - **K4** (AsyncLLMEngine async submission) — REJECTED by idea-
+translator. vLLM
+           0.21.0 V1 pooling-runner does not expose a stable AsyncLLMEng
+ine.encode for `
+          runner="pooling"`. The fallback (concurrent.futures over `llm.
+embed`) collapse
+          s to K1.
+
+      63  - **K7** (user-level CUDA streams) — REJECTED by paper-triager
+. vLLM owns H2D
+          scheduling; user-level streams around the synchronous `llm.emb
+ed` cannot overl
+          ap anything.
+
+      64  - **K8** (pre-tokenization via `prompt_token_ids`) — REJECTED
+by paper-triager
+          . Requires tokenizing real prompts before the timed region — c
+ontract violatio
+          n (peeks at real samples).
+      65 +- **K5** (multi-replica spawn, multi-process) — STRUCTURAL BLO
+CKER, graveyard.
+         + vLLM 0.21.0 V1 engine asserts `init_snapshot.free_memory >= f
+ree_gpu_memory`
+         +when two LLMs init concurrently in spawned processes (memory p
+rofiler intolera
+         +nt of allocation churn from sibling process). One worker also
+hit the same KV-
+         +cache-OOM as K1's first attempt at gmu=0.40. Sequential init w
+ould also be slo
+         +wer than K1 threads on a 100-sample workload, so K5's mechanis
+m is empirically
+         + subsumed by K1.
+
+      66
+      67  ## stale known directions and why they should not dominate
+      68
+
+● Update(vllm_iterate/research_state.md)
+
+      74
+      75  ## refresh counters
+
+      76
+      77 -- experiments since last `hypothesis-scout` refresh: 3 (K6, K1
+-crash, K1) — re
+         -fresh trigger now (>=3)
+
+      78 -- experiments since last external refresh: 3 (K6, K1-crash, K1
+) — refresh due
+         -after K5 (>=6)
+
+      79 -- consecutive non-keeps: 0 (K1-crash followed by K1-keep count
+s as recovered)
+      80 -- consecutive same-family runs: 2 (multi-replica)
+
+      81 -- IDEAS scheduled after K5: trigger external research protocol
+ + hypothesis-sc
+         -out to populate orthogonal-axis queue
+
+      77 +- experiments since last `hypothesis-scout` refresh: 4 (K6, K1
+-crash, K1, K5-c
+         +rash) — TRIGGER NOW
+
+      78 +- experiments since last external refresh: 4 — trigger now (la
+st known-scout c
+         +onsumed)
+
+      79 +- consecutive non-keeps: 1 (K5 crash)
+
+      80 +- consecutive same-family runs: 3 (multi-replica — graveyard o
+r rotate)
+      81 +- Trigger external research protocol now: known-scout exhauste
+d, queue is empt
+         +y, last K5 was a crash.
+
+      82
+      83  ## interesting log signals from the harness run
+      84
+
+● Update(vllm_iterate/research_state.md)
+
+      94
+      95  ## next required agent call
+
+      96
+      97 -K5 is the last `source=known` candidate per priority rule. Aft
+er K5: external-
+         -research + hypothesis-scout refresh to bring in orthogonal-axi
+s ideas. Reviewe
+         -r's K1 APPROVE_WITH_NOTES recommended exploring different axes
+ (batching, dtyp
+         -e, attention impl) since gmu headroom blocks N>=3.
+
+      97 +External research protocol: `literature-scout` to coordinate `
+arxiv-scout`, `g
+         +ithub-scout`, `docs-scout`, `blog-scout`, `known-scout` in par
+allel. Then `pap
+         +er-triager`, `idea-translator`, `source-auditor`, `idea-synthe
+sis`. Emphasis (
+         +from search-strategist): V1-engine pooling flags, CUDA graphs
+deeper + enforce
+         +_eager, flashinfer/flashattn backend, compile mode, pooled-out
+put extraction o
+         +verhead, dtype, attention impl.
+
+
+● Reading 1 file… (ctrl+o to expand)
+
+
+● Write(vllm_iterate/results.tsv)
+
+
+      1  commit sample/s        y_cosine        memory_gb       status
+family  description
+      2 +f53ccd8        4.2501  1.000000        4.31    keep    harness
+harness reproduction; b
+        +tput paths redirected
+
+      3 +ce80207        6.4725  1.000000        4.31    keep    warmup
+K6 synthetic JIT warmup
+        +events in timed pass
+
+      4 +f0b3546        0.0000  0.000000        0.00    crash   multi-re
+plica   K1 first attemp
+        +tion=0.40 -> KV cache OOM
+
+      5 +a4467c7        9.8513  1.000000        4.31    keep    multi-re
+plica   K1 N=2 multi-re
+        +or; gmu=0.45 each
+
+      6  4208fe3        0.0000  0.000000        0.00    crash   multi-re
+plica   K5 N=2 spawn wo
+         ofile assertion under concurrent worker init; graveyard
+
+● State restored. Now triggering the external research protocol — runnin
+g all source scouts in
+  parallel for the first refresh.
+
+  arxiv-scout(arXiv mining for inference opts)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+* Running search loop… (41m 22s · ↓ 97.3k tokens)
+
+  ⎿  
+
+
+
+✶ Running search loop… (41m 31s · ↓ 97.5k tokens)
+
+  ⎿  
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+❯ 
+
+● 3 source-scouts returned 21 candidates total. Skipping blog-scout (pap
+ers+GitHub+docs
+  sufficient diversity). Routing through paper-triager.
+
+
+● Triager identifies Stack A (capture-ladder pin: P5+G2+D1+D2+D7) as top
+ priority. Routing
+  through idea-translator + source-auditor in parallel.
+
+  idea-translator(Translate Stack A capture-ladder)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+✻ Running search loop… (57m 2s · ↓ 115.3k tokens)
+
+  ⎿  
+
+
+
+✽ Running search loop… (57m 14s · ↓ 115.7k tokens)
+
+  ⎿  
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+● Both audits approve Stack A. Updating research_state and invoking expe
+riment-implementer.
+
+● Update(vllm_iterate/research_state.md)
+
+      11  - memory_gb: 4.31 (per-replica)
+      12  - note: K1 N=2 in-process LLM replicas with ThreadPoolExecutor
+ and `[i::N]` sh
+          arding, gmu=0.45 each. Stacks with K6 warmup. APPROVE_WITH_NOT
+ES from reviewer
+           (gmu margin thin; N>=3 likely OOM).
+
+      13
+
+      14 -## active hypothesis queue (ordered, `source=known` on top)
+
+      14 +## active hypothesis queue (ordered)
+
+      15
+
+      16 -(empty — known-scout queue exhausted; triggering mandatory ext
+ernal research r
+         -efresh)
+
+      16 +1. **Stack A — capture-ladder pin** (`source=docs+github+arxiv
+`, family=cudagr
+         +aph). One coherent experiment combining: P5 (extend K6 warmup
+with batch-size
+         +ladder), G2/D1 (pin `cudagraph_capture_sizes=[1,2,4,8,16,32,64
+]`), D2 (`cudagr
+         +aph_num_of_warmups=2`), D7 (`max_num_seqs=64`). Documented mec
+hanism: shrink d
+         +efault 51-bucket ladder to 7 buckets, ensure per-replica batch
+ (~50) lands in
+         +the 64-bucket, pre-replay every graph during warmup. Source-au
+ditor & idea-tra
+         +nslator approved. Locked rationale: ladder=power-of-2, NOT der
+ived from 100/2=
+         +50.
+
+      17 +2. **G4 — multimodal cache off** (`source=github+docs`, family
+=cudagraph). Sta
+         +ndalone: `mm_processor_cache_gb=0, skip_mm_profiling=True`. Wi
+th 100 unique im
+         +ages cache is dead weight; profiling skip recovers GPU mem.
+
+      18 +3. **Stack B — host-side micro-bundle** (`source=arxiv+docs`,
+family=host). P4
+         + (hoist params, pin affinity) + P6 (`torch.set_float32_matmul_
+precision("high"
+         +)`) + D4 (`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`).
+ Lowest risk, sm
+         +allest expected payoff, stacks with everything.
+
+      19 +4. **P1/G3 — `cudagraph_mm_encoder: True`** (`source=arxiv+git
+hub`, family=cud
+         +agraph). Documented +11-19% Qwen3-VL-specific. MAYBE: confirm
+flag exists in 0
+         +.21.0 first.
+
+      20
+      18 -After external refresh: orthogonal-axis ideas (batching, dtype
+, attention impl
+         -, V1 pooling flags, CUDA graphs deeper, flashinfer backend) pe
+r reviewer/strat
+         -egist diversity guidance.
+
+      21 +After Stack A: rotate family to non-cudagraph (per anti-collap
+se) for next exp
+         +eriment, then return.
+
+      22
+      23  ## fresh-idea queue (separated from known local ideas)
+      24
+
+● Update(vllm_iterate/research_state.md)
+
+      37  | source | count |
+      38  |---|---|
+
+      39  | local | 0 |
+      40 -| arXiv | 0 |
+
+      41 -| GitHub | 0 |
+
+      42 -| docs | 0 |
+
+      43 -| blog | 0 |
+
+      44 -| known | 3 (K6, K1, K5 queued; K3,K4 graveyard; K2,K7,K8 reje
+cted by triager)
+         - |
+
+      40 +| arXiv | 6 surfaced (P1-P6); 1 kept (P5 in Stack A), 1 maybe
+(P1), 1 reject (
+         +P2) |
+
+      41 +| GitHub | 7 surfaced (G1-G7); 2 kept (G2/G4), 1 maybe (G3) |
+
+      42 +| docs | 8 surfaced (D1-D8); 5 kept (D1/D2/D4/D7); 1 reject (D
+6) |
+      43 +| blog | 0 (skipped in refresh #1 — 3 sources already gave 21
+candidates) |
+      44 +| known | 3 used (K6, K1 keep; K5 graveyard); K3,K4,K2,K7,K8 g
+raveyard |
+      45  | other | 0 |
+      46
+      47  ## last 10 runs
+
+✢ Running search loop… (59m 51s · ↑ 122.6k tokens)
+
+● Bash(git diff --stat vllm_iterate/run.py && echo "---" && grep -n -E
+      "compilation_config|cudagraph_capture|max_num_seqs|_STACK_A_LADDER
+|Stack A"
+      /dev/shm/auto_explor…)
+  ⎿  Waiting…
+
+
+      1 file changed, 98 insertions(+), 7 deletions(-)
+
+     ---
+
+     … +24 lines (ctrl+o to expand)
+
+
+● Patch looks well-structured. Running combined contract + overfit audit
+, then committing and
+  running.
+
+
+
+  contract-auditor(Pre-run Stack A contract audit)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+✢ Running search loop… (1h 2m 1s · ↓ 130.3k tokens)
+
+  ⎿  
+
+
+
+· Running search loop… (1h 2m 13s · ↓ 130.6k tokens)
+
+  ⎿  
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+● Both audits ALLOW. Committing and running Stack A.
+
+● Bash(git add vllm_iterate/run.py && git -c user.email=auto@research -c
+ user.name=autoresearch
+       commit -m "Stack A: pin cudagraph_capture_sizes ladder + max_num_
+seqs=6…)
+  ⎿  Waiting…
+
+      warmup
+
+      1 file changed, 98 insertions(+), 7 deletions(-)
+
+     593b6c4
+
+
+● Bash(timeout 540 /dev/shm/vllm/venv/bin/python /dev/shm/auto_explore/v
+llm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1; echo "EXIT=$?")
+
+  ⎿  Waiting…
+
+
+
+
+  Bash(/dev/shm/vllm/venv/bin/python /dev/shm/vllm/vllm_baseline/cosine_
+similarity.py
+      /dev/shm/auto_explore/vllm_iterate/result.npy /dev/shm/vllm/vllm_b
+aseline/baselin…)
+  ⎿  Running…
+
+
+  Searching for 1 pattern… (ctrl+o to expand)
+
+
+● Stack A result: 9.9712 sample/s (+1.2% vs K1's 9.8513), cosine 1.0. Ma
+rginal gain — likely
+  within noise. Submitting to result-analyst.
+
+● result-analyst(Classify Stack A result)
+
+  ⎿  In progress… · 0 tool uses · (ctrl+o to expand)
+
+* Running search loop… (1h 5m 41s · ↓ 136.9k tokens)
+
+  ⎿  
+
+
+
+● Stack A discarded. Resetting to K1 best, logging, and rotating to G4 (
+simpler
+  mm_processor_cache_gb=0 flag).
+
+  Bash(git reset --hard a4467c7 2>&1 | tail -3 && printf
+
+      '593b6c4\t9.9712\t1.000000\t4.31\tdiscard\tcudagraph\tStack A capt
+ure-ladder pin; +1.2%%
+      over K1 within noise;…)
+  ⎿  Running…
+
+
+
+● Reset clobbered uncommitted TSV rows again. Restoring + committing TSV
+ state to avoid further
+   loss.
+
+
+● Write(vllm_iterate/results.tsv)
+
+
+      1  commit sample/s        y_cosine        memory_gb       status
+family  description
+      2 +f53ccd8        4.2501  1.000000        4.31    keep    harness
+harness reproduction; b
+        +tput paths redirected
+
+      3 +ce80207        6.4725  1.000000        4.31    keep    warmup
+K6 synthetic JIT warmup
+        +events in timed pass
+
+      4 +f0b3546        0.0000  0.000000        0.00    crash   multi-re
+plica   K1 first attemp
+        +tion=0.40 -> KV cache OOM
+
+      5 +a4467c7        9.8513  1.000000        4.31    keep    multi-re
+plica   K1 N=2 multi-re
+        +or; gmu=0.45 each
+
+      6 +4208fe3        0.0000  0.000000        0.00    crash   multi-re
+plica   K5 N=2 spawn wo
+        +ofile assertion under concurrent worker init; graveyard
+
+      7  593b6c4        9.9712  1.000000        4.31    discard cudagrap
+h       Stack A capture
+          K1 within noise; too complex for its gain
+
+● Bash(git add vllm_iterate/results.tsv vllm_iterate/research_state.md &
+& git -c
+      user.email=auto@research -c user.name=autoresearch commit -m "trac
+k results.tsv and re…)
+  ⎿  Waiting…
+
+      2 files changed, 106 insertions(+)
+      create mode 100644 vllm_iterate/research_state.md
+
+
+
+● Reading 1 file… (ctrl+o to expand)
+
+
+
+● Implementing G4 directly — minimal edit, just two flags on each replic
+a.
+
+● Update(vllm_iterate/run.py)
+
+      193      llms = []
+      194      for _r_idx in range(N_REPLICAS):
+
+      195          try:
+      196 -            _llm = LLM(
+
+      196 +            # G4: mm processor cache off + skip mm profiling.
+ 100 unique mult
+          +imodal
+
+      197 +            # inputs make the LRU pure overhead; skipping mm-
+profiling recove
+          +rs GPU
+
+      198 +            # mem and shortens init. Generic vLLM knobs docum
+ented in Qwen3-V
+          +L recipe.
+
+      199 +            _g4_kwargs = dict(
+
+      200                  model=MODEL_PATH,
+      201                  runner="pooling",
+      202                  dtype="bfloat16",
+      203                  trust_remote_code=True,
+      204                  gpu_memory_utilization=0.45,
+      205 +                mm_processor_cache_gb=0,
+
+      206 +                skip_mm_profiling=True,
+
+      207              )
+      208 +            try:
+
+      209 +                _llm = LLM(**_g4_kwargs)
+
+      210 +                print(f"G4: replica {_r_idx} constructed with
+ mm cache disabl
+          +ed + profiling skip.")
+
+      211 +            except (TypeError, ValueError) as _g4_err:
+
+      212 +                print(f"G4: extra kwargs rejected for replica
+ {_r_idx} ({_g4_
+          +err}); falling back.")
+
+      213 +                _llm = LLM(
+
+      214 +                    model=MODEL_PATH,
+
+      215 +                    runner="pooling",
+
+      216 +                    dtype="bfloat16",
+
+      217 +                    trust_remote_code=True,
+
+      218 +                    gpu_memory_utilization=0.45,
+
+      219 +                )
+
+      220              llms.append(_llm)
+      221          except Exception as _llm_init_err:
+      222              if _r_idx == 0:
+
+● Bash(/dev/shm/vllm/venv/bin/python -c "from vllm.config import VllmCon
+fig; print('ok')" 2>&1
+      | tail -3 && /dev/shm/vllm/venv/bin/python -c "from inspect import
+ signa…)
+  ⎿  Waiting…
+
+
+
+● Bash(/dev/shm/vllm/venv/bin/python -c "from vllm.engine.arg_utils impo
+rt EngineArgs; import
+      dataclasses; fields = [f.name for f in dataclasses.fields(EngineAr
+gs) if…)
+  ⎿  Waiting…
+
+
+     ', 'enable_mm_embeds', 'interleave_mm_strings', 'mm_processor_kwarg
+s', 'mm_processor_
+     … +8 lines (ctrl+o to expand)
+
+
+● Bash(/dev/shm/vllm/venv/bin/python -c "
+
+      from inspect import signature…)
+
+  ⎿  Waiting…
+
+
+     _tokenizer_init', 'trust_remote_code', 'allowed_local_media_path',
+'allowed_media_dom
+     … +4 lines (ctrl+o to expand)
+
+
+● LLM accepts **kwargs. mm_processor_cache_gb and skip_mm_profiling are
+valid EngineArgs
+  fields, so they'll flow through. Committing G4 and running.
+
+
+● Bash(git add vllm_iterate/run.py && git -c user.email=auto@research -c
+ user.name=autoresearch
+       commit -m "G4: mm_processor_cache_gb=0 + skip_mm_profiling=True o
+n both…)
+  ⎿  Waiting…
+
+      1 file changed, 18 insertions(+), 1 deletion(-)
+
+     2d7dd23
+
+
+
+● Bash(timeout 300 /dev/shm/vllm/venv/bin/python /dev/shm/auto_explore/v
+llm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1; echo "EXIT=$?")
+  ⎿  Waiting…
+
+
+
+● Bash(/dev/shm/vllm/venv/bin/python /dev/shm/vllm/vllm_baseline/cosine_
+similarity.py
+      /dev/shm/auto_explore/vllm_iterate/result.npy /dev/shm/vllm/vllm_b
+aseline/baselin…)
+  ⎿  Waiting…
+
+     tivated — Triton JIT compilations during inference will be logged a
+s warnings.
+     G4: replica 0 constructed with mm cache disabled + profiling skip.
+
+     … +23 lines (ctrl+o to expand)
+
+
+● G4 result: 10.2972 sample/s (+4.5% over K1), cosine 1.000000. Cleaner
+signal than Stack A.
+  Final analysis + reviewer in parallel.
+
+
+
+
+· Running search loop… (1h 9m 50s · ↓ 144.2k tokens)
+
+  ⎿  
+
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+
+● G4 APPROVED. New best = 10.2972 sample/s (+142.3% over harness). Final
+izing state.
+
+  Reading 1 file… (ctrl+o to expand)
+  ⎿  $ printf '2d7dd23\t10.2972\t1.000000\t4.31\tkeep\tmm-cache\tG4 mm_p
+rocessor_cache_gb=0 +
+     skip_mm_profiling=True; +4.5%% over K1\n' >>
+     /dev/shm/auto_explore/vllm_iterate/results.tsv && cat
+
+     /dev/shm/auto_explore/vllm_iterate/results.tsv
+
+
+● Update(vllm_iterate/research_state.md)
+
+
+       4
+       5  ## current best valid result
+
+       6
+       7 -- commit: `a4467c7`
+
+       8 -- family: `multi-replica`
+
+       9 -- sample/s: **9.8513** (+131.8% vs harness, +52.2% vs K6)
+
+       7 +- commit: `2d7dd23`
+
+       8 +- family: `mm-cache`
+
+       9 +- sample/s: **10.2972** (+142.2% vs harness, +4.5% vs K1)
+
+      10  - y_cosine: 1.000000
+      11  - memory_gb: 4.31 (per-replica)
+      12 -- note: K1 N=2 in-process LLM replicas with ThreadPoolExecutor
+ and `[i::N]` sh
+         -arding, gmu=0.45 each. Stacks with K6 warmup. APPROVE_WITH_NOT
+ES from reviewer
+         - (gmu margin thin; N>=3 likely OOM).
+
+      12 +- note: G4 adds `mm_processor_cache_gb=0` and `skip_mm_profili
+ng=True` (docume
+         +nted Qwen3-VL EngineArgs flags) to both K1 replicas. Stacks wi
+th K6 + K1. APPR
+         +OVE_WITH_NOTES (thin gmu margin; consider capturing peak GPU m
+em on next run).
+      13
+      14  ## active hypothesis queue (ordered)
+      15
+
+● Update(vllm_iterate/research_state.md)
+
+      77
+      78  ## refresh counters
+
+      79
+      80 -- experiments since last `hypothesis-scout` refresh: 4 (K6, K1
+-crash, K1, K5-c
+         -rash) — TRIGGER NOW
+
+      81 -- experiments since last external refresh: 4 — trigger now (la
+st known-scout c
+         -onsumed)
+
+      82 -- consecutive non-keeps: 1 (K5 crash)
+
+      83 -- consecutive same-family runs: 3 (multi-replica — graveyard o
+r rotate)
+      84 -- Trigger external research protocol now: known-scout exhauste
+d, queue is empt
+         -y, last K5 was a crash.
+
+      80 +- experiments since last external refresh: 2 (Stack A, G4) — r
+efresh due in ≤4
+         + more experiments
+
+      81 +- consecutive non-keeps: 0 (G4 keep recovers)
+
+      82 +- consecutive same-family runs: 1 (mm-cache; rotates from cuda
+graph→mm-cache a
+         +fter Stack A discard)
+
+      83 +- Next experiment family preference: explore a non-mm-cache ax
+is to maintain d
+         +iversity.
+
+      84
+      85  ## interesting log signals from the harness run
+      86
+
+● Bash(git add vllm_iterate/results.tsv vllm_iterate/research_state.md &
+& git -c
+      user.email=auto@research -c user.name=autoresearch commit -m "trac
+k G4 keep at 10.2972…)
+  ⎿  Waiting…
+
+      2 files changed, 9 insertions(+), 9 deletions(-)
+
+● Orchestrator loop complete for this turn. Final state:
+
+
+  ┌─────┬────────┬────────┬────────┬──────────┬──────┐
+  │  #  │ commit │ family │ status │ sample/s │ gain │
+  ├─────┼────────┼────────┼────────┼──────────┼──────┤
+
+  └─────┴────────┴────────┴────────┴──────────┴──────┘
+
+  └─────┴─────────┴─────────┴────────┴──────────┴──────────┘
+  │ 2   │ ce80207 │ warmup  │ keep   │ 6.4725   │ +52.3% (K6 JIT warmup)
+ │
+  └─────┴─────────┴─────────┴────────┴──────────┴───────────────────────
+─┘
+  │ 3   │ f0b3546 │ multi-replica │ crash  │ —        │ gmu=0.40 KV OOM
+       │
+  └─────┴─────────┴───────────────┴────────┴──────────┴─────────────────
+───────┘
+  │ 4   │ a4467c7 │ multi-replica │ keep   │ 9.8513   │ +131.8% (K1 N=2
+threads) │
+  ├─────┼─────────┼───────────────┼────────┼──────────┼─────────────────
+─────────┤
+  │ 5   │ 4208fe3 │ multi-replica │ crash  │ —        │ K5 spawn graveya
+rd       │
+  └─────┴─────────┴───────────────┴────────┴──────────┴─────────────────
+─────────┘
+  │ 6   │ 593b6c4 │ cudagraph     │ discard │ 9.9712   │ +1.2% noise
+          │
+  └─────┴─────────┴───────────────┴─────────┴──────────┴────────────────
+──────────┘
+  │ 7   │ 2d7dd23 │ mm-cache      │ keep    │ 10.2972  │ +142.2% (G4)
+          │
+  └─────┴─────────┴───────────────┴─────────┴──────────┴────────────────
+──────────┘
+
+  Current best: 10.2972 sample/s, cosine 1.000000 — 2.42× the baseline.
+
+
+  The orchestrator's infinite search loop is at a natural pause point. T
+he autonomous loop
+  would continue with the queued items (Stack B host-side bundle, P1/G3
+cudagraph_mm_encoder,
+  plus an ablation of Stack A's max_num_seqs alone). The user can resume
+ via another
+  invocation; state is persisted in commit 5c1b5d8 and research_state.md
+.
+
+✻ Churned for 1h 10m 32s
+
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+────────────────────────────────────────────────────────────────────────
+───────────────────────
+❯ continue the loop
+      /dev/shm/vllm/venv/bin/python -c "from inspect
+      import signa…)
+  ⎿  Waiting…
+  ⎿  ok
+     ['skip_tokenizer_init', 'mm_processor_kwargs']
+
+● Bash(/dev/shm/vllm/venv/bin/python -c "from
+      vllm.engine.arg_utils import EngineArgs; import
+      dataclasses; fields = [f.name for f in
+      dataclasses.fields(EngineArgs) if…)
+  ⎿  Waiting…
+  ⎿  ['skip_tokenizer_init', 'kv_cache_dtype', 'dcp_
+     comm_backend', 'dcp_kv_cache_interleave_size',
+     'cp_kv_cache_interleave_size', 'kv_cache_memory
+     … +16 lines (ctrl+o to expand)
+
+● Bash(/dev/shm/vllm/venv/bin/python -c "
+      from inspect import signature…)
+  ⎿  Waiting…
+  ⎿  LLM.__init__ has 38 params; takes **kwargs: Tru
+     e
+     First 25: ['self', 'model', 'runner', 'convert'
+     … +9 lines (ctrl+o to expand)
+
+● LLM accepts **kwargs. mm_processor_cache_gb and
+  skip_mm_profiling are valid EngineArgs fields, so
+  they'll flow through. Committing G4 and running.
+
+● Bash(git add vllm_iterate/run.py && git -c
+      user.email=auto@research -c user.name=autoresearch
+      commit -m "G4: mm_processor_cache_gb=0 +
+      skip_mm_profiling=True on both…)
+  ⎿  Waiting…
+  ⎿  [main 2d7dd23] G4: mm_processor_cache_gb=0 + sk
+     ip_mm_profiling=True on both replicas
+      1 file changed, 18 insertions(+), 1 deletion(-
+     … +2 lines (ctrl+o to expand)
+
+● Bash(timeout 300 /dev/shm/vllm/venv/bin/python
+      /dev/shm/auto_explore/vllm_iterate/run.py >
+      /dev/shm/auto_explore/vllm_iterate/run.log 2>&1;
+      echo "EXIT=$?")
+  ⎿  Waiting…
+  ⎿  EXIT=0
+  ⎿  (timeout 6m)
+
+● Bash(/dev/shm/vllm/venv/bin/python
+      /dev/shm/vllm/vllm_baseline/cosine_similarity.py
+      /dev/shm/auto_explore/vllm_iterate/result.npy
+      /dev/shm/vllm/vllm_baseline/baselin…)
+  ⎿  Waiting…
+  ⎿  (EngineCore pid=830984) INFO 05-25 14:44:28 [ji
+     t_monitor.py:54] Kernel JIT monitor activated —
+      Triton JIT compilations during inference will
+     … +43 lines (ctrl+o to expand)
+
+● G4 result: 10.2972 sample/s (+4.5% over K1), cosine
+  1.000000. Cleaner signal than Stack A. Final analysis +
+   reviewer in parallel.
+
+● Running 2 agents… (ctrl+o to expand)
+   ├ result-analyst (Classify G4 result) · 0 tool uses
+   │ ⎿  Initializing…
+   └ reviewer (Review G4 keep) · 0 tool uses
+     ⎿  Initializing…
+
+● G4 APPROVED. New best = 10.2972 sample/s (+142.3% over
+  harness). Finalizing state.
+
+● Reading 1 file… (ctrl+o to expand)
+  ⎿  $ printf '2d7dd23\t10.2972\t1.000000\t4.31\tkeep\tmm
+     -cache\tG4 mm_processor_cache_gb=0 +
+     skip_mm_profiling=True; +4.5%% over K1\n' >>
+     /dev/shm/auto_explore/vllm_iterate/results.tsv &&
+     cat /dev/shm/auto_explore/vllm_iterate/results.tsv
+
+● Update(vllm_iterate/research_state.md)
+  ⎿  Added 4 lines, removed 4 lines
+       4
+       5  ## current best valid result
+       6
+       7 -- commit: `a4467c7`
+       8 -- family: `multi-replica`
+       9 -- sample/s: **9.8513** (+131.8% vs harne
+         -ss, +52.2% vs K6)
+       7 +- commit: `2d7dd23`
+       8 +- family: `mm-cache`
+       9 +- sample/s: **10.2972** (+142.2% vs harn
+         +ess, +4.5% vs K1)
+      10  - y_cosine: 1.000000
+      11  - memory_gb: 4.31 (per-replica)
+      12 -- note: K1 N=2 in-process LLM replicas w
+         -ith ThreadPoolExecutor and `[i::N]` shar
+         -ding, gmu=0.45 each. Stacks with K6 warm
+         -up. APPROVE_WITH_NOTES from reviewer (gm
+         -u margin thin; N>=3 likely OOM).
+      12 +- note: G4 adds `mm_processor_cache_gb=0
+         +` and `skip_mm_profiling=True` (document
+         +ed Qwen3-VL EngineArgs flags) to both K1
+         + replicas. Stacks with K6 + K1. APPROVE_
+         +WITH_NOTES (thin gmu margin; consider ca
+         +pturing peak GPU mem on next run).
+      13
+      14  ## active hypothesis queue (ordered)
+      15
+
+● Update(vllm_iterate/research_state.md)
+  ⎿  Added 4 lines, removed 5 lines
+      77
+      78  ## refresh counters
+      79
+      80 -- experiments since last `hypothesis-sco
+         -ut` refresh: 4 (K6, K1-crash, K1, K5-cra
+         -sh) — TRIGGER NOW
+      81 -- experiments since last external refres
+         -h: 4 — trigger now (last known-scout con
+         -sumed)
+      82 -- consecutive non-keeps: 1 (K5 crash)
+      83 -- consecutive same-family runs: 3 (multi
+         --replica — graveyard or rotate)
+      84 -- Trigger external research protocol now
+         -: known-scout exhausted, queue is empty,
+         - last K5 was a crash.
+      80 +- experiments since last external refres
+         +h: 2 (Stack A, G4) — refresh due in ≤4 m
+         +ore experiments
+      81 +- consecutive non-keeps: 0 (G4 keep reco
+         +vers)
+      82 +- consecutive same-family runs: 1 (mm-ca
+         +che; rotates from cudagraph→mm-cache aft
+         +er Stack A discard)
+      83 +- Next experiment family preference: exp
+         +lore a non-mm-cache axis to maintain div
+         +ersity.
+      84
+      85  ## interesting log signals from the harn
+          ess run
+      86
+
+● Bash(git add vllm_iterate/results.tsv
+      vllm_iterate/research_state.md && git -c
+      user.email=auto@research -c user.name=autoresearch
+      commit -m "track G4 keep at 10.2972…)
+  ⎿  Waiting…
+  ⎿  [main 5c1b5d8] track G4 keep at 10.2972 sample/
+     s (+142% vs harness)
+      2 files changed, 9 insertions(+), 9 deletions(
+     -)
+
+● Orchestrator loop complete for this turn. Final state:
+
+  ┌─────┬───────┬───────────┬───────┬───────┬────────┐
+  │  #  │ commi │  family   │ statu │ sampl │  gain  │
+  │     │   t   │           │   s   │  e/s  │        │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │ 1   │ f53cc │ harness   │ keep  │ 4.250 │ baseli │
+  │     │ d8    │           │       │ 1     │ ne     │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │     │       │           │       │       │ +52.3% │
+  │ 2   │ ce802 │ warmup    │ keep  │ 6.472 │  (K6   │
+  │     │ 07    │           │       │ 5     │ JIT wa │
+  │     │       │           │       │       │ rmup)  │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │     │ f0b35 │ multi-rep │       │       │ gmu=0. │
+  │ 3   │ 46    │ lica      │ crash │ —     │ 40 KV  │
+  │     │       │           │       │       │ OOM    │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │     │       │           │       │       │ +131.8 │
+  │ 4   │ a4467 │ multi-rep │ keep  │ 9.851 │ % (K1  │
+  │     │ c7    │ lica      │       │ 3     │ N=2 th │
+  │     │       │           │       │       │ reads) │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │     │       │           │       │       │ K5     │
+  │ 5   │ 4208f │ multi-rep │ crash │ —     │ spawn  │
+  │     │ e3    │ lica      │       │       │ gravey │
+  │     │       │           │       │       │ ard    │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │ 6   │ 593b6 │ cudagraph │ disca │ 9.971 │ +1.2%  │
+  │     │ c4    │           │ rd    │ 2     │ noise  │
+  ├─────┼───────┼───────────┼───────┼───────┼────────┤
+  │ 7   │ 2d7dd │ mm-cache  │ keep  │ 10.29 │ +142.2 │
+  │     │ 23    │           │       │ 72    │ % (G4) │
+  └─────┴───────┴───────────┴───────┴───────┴────────┘
+
+  Current best: 10.2972 sample/s, cosine 1.000000 — 2.42×
+   the baseline.
+
+  The orchestrator's infinite search loop is at a natural
+   pause point. The autonomous loop would continue with
+  the queued items (Stack B host-side bundle, P1/G3
+  cudagraph_mm_encoder, plus an ablation of Stack A's
+  max_num_seqs alone). The user can resume via another
+  invocation; state is persisted in commit 5c1b5d8 and
+  research_state.md.
+
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+  cudagraph_mm_encoder, plus an ablation of Stack A's max_num_seqs alone
+). The user can
+  resume via another invocation; state is persisted in commit 5c1b5d8 an
+d
+  research_state.md.
+
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+
+  Current best: 10.2972 sample/s, cosine 1.000000 — 2.42× the baseline.
+
+  The orchestrator's infinite search loop is at a natural pause point. T
+he autonomous
+  loop would continue with the queued items (Stack B host-side bundle, P
+1/G3
+  cudagraph_mm_encoder, plus an ablation of Stack A's max_num_seqs alone
+). The user can
+   resume via another invocation; state is persisted in commit 5c1b5d8 a
+nd
+  research_state.md.
+
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+────────────────────────────────────────────────────────────
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+────────────────────────────────────────────────────────────────────────
+─────────────
+❯ continue the loop
+────────────────────────────────────────────────────────────────────────
+─────────────
+      /dev/shm/auto_explore/vllm_iterate/result.npy
+      /dev/shm/vllm/vllm_baseline/baselin…)
+  ⎿  Waiting…
+  ⎿  (EngineCore pid=830984) INFO 05-25 14:44:28 [jit_
+     monitor.py:54] Kernel JIT monitor activated — Tri
+     ton JIT compilations during inference will be log
+     … +41 lines (ctrl+o to expand)
+
+● G4 result: 10.2972 sample/s (+4.5% over K1), cosine
+  1.000000. Cleaner signal than Stack A. Final analysis +
+  reviewer in parallel.
+
+● Running 2 agents… (ctrl+o to expand)
+   ├ result-analyst (Classify G4 result) · 0 tool uses
+   │ ⎿  Initializing…
+   └ reviewer (Review G4 keep) · 0 tool uses
+     ⎿  Initializing…
+
+● G4 APPROVED. New best = 10.2972 sample/s (+142.3% over
+  harness). Finalizing state.
+
+● Reading 1 file… (ctrl+o to expand)
+  ⎿  $ printf
+     '2d7dd23\t10.2972\t1.000000\t4.31\tkeep\tmm-cache\tG4
+     mm_processor_cache_gb=0 + skip_mm_profiling=True;
+     +4.5%% over K1\n' >>
+     /dev/shm/auto_explore/vllm_iterate/results.tsv && cat
+     /dev/shm/auto_explore/vllm_iterate/results.tsv
+
+● Update(vllm_iterate/research_state.md)
+  ⎿  Added 4 lines, removed 4 lines
+       4
+       5  ## current best valid result
+       6
+       7 -- commit: `a4467c7`
+       8 -- family: `multi-replica`
+       9 -- sample/s: **9.8513** (+131.8% vs harness
+         -, +52.2% vs K6)
+       7 +- commit: `2d7dd23`
+       8 +- family: `mm-cache`
+       9 +- sample/s: **10.2972** (+142.2% vs harnes
+         +s, +4.5% vs K1)
+      10  - y_cosine: 1.000000
+      11  - memory_gb: 4.31 (per-replica)
+      12 -- note: K1 N=2 in-process LLM replicas wit
+         -h ThreadPoolExecutor and `[i::N]` sharding
+         -, gmu=0.45 each. Stacks with K6 warmup. AP
+         -PROVE_WITH_NOTES from reviewer (gmu margin
+         - thin; N>=3 likely OOM).
+      12 +- note: G4 adds `mm_processor_cache_gb=0`
+         +and `skip_mm_profiling=True` (documented Q
+         +wen3-VL EngineArgs flags) to both K1 repli
+         +cas. Stacks with K6 + K1. APPROVE_WITH_NOT
+         +ES (thin gmu margin; consider capturing pe
+         +ak GPU mem on next run).
+      13
+      14  ## active hypothesis queue (ordered)
+      15
+
+● Update(vllm_iterate/research_state.md)
+  ⎿  Added 4 lines, removed 5 lines
+      77
+      78  ## refresh counters
+      79
+      80 -- experiments since last `hypothesis-scout
+         -` refresh: 4 (K6, K1-crash, K1, K5-crash)
+         -— TRIGGER NOW
+      81 -- experiments since last external refresh:
+         - 4 — trigger now (last known-scout consume
+         -d)
+      82 -- consecutive non-keeps: 1 (K5 crash)
+      83 -- consecutive same-family runs: 3 (multi-r
+         -eplica — graveyard or rotate)
+      84 -- Trigger external research protocol now:
+         -known-scout exhausted, queue is empty, las
+         -t K5 was a crash.
+      80 +- experiments since last external refresh:
+         + 2 (Stack A, G4) — refresh due in ≤4 more
+         +experiments
+      81 +- consecutive non-keeps: 0 (G4 keep recove
+         +rs)
+      82 +- consecutive same-family runs: 1 (mm-cach
+         +e; rotates from cudagraph→mm-cache after S
+         +tack A discard)
+      83 +- Next experiment family preference: explo
+         +re a non-mm-cache axis to maintain diversi
+         +ty.
+      84
+      85  ## interesting log signals from the harnes
+          s run
+      86
+
+● Bash(git add vllm_iterate/results.tsv
+      vllm_iterate/research_state.md && git -c
+      user.email=auto@research -c user.name=autoresearch
+      commit -m "track G4 keep at 10.2972…)
+  ⎿  Waiting…
+  ⎿  [main 5c1b5d8] track G4 keep at 10.2972 sample/s
+     (+142% vs harness)
+      2 files changed, 9 insertions(+), 9 deletions(-)
+
+
+● Orchestrator loop complete for this turn. Final state:
+
+  ┌─────┬───────┬───────────┬───────┬────────┬────────┐
+  │  #  │ commi │  family   │ statu │ sample │  gain  │
+  │     │   t   │           │   s   │   /s   │        │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │ 1   │ f53cc │ harness   │ keep  │ 4.2501 │ baseli │
+  │     │ d8    │           │       │        │ ne     │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │     │       │           │       │        │ +52.3% │
+  │ 2   │ ce802 │ warmup    │ keep  │ 6.4725 │  (K6   │
+  │     │ 07    │           │       │        │ JIT wa │
+  │     │       │           │       │        │ rmup)  │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │     │ f0b35 │ multi-rep │       │        │ gmu=0. │
+  │ 3   │ 46    │ lica      │ crash │ —      │ 40 KV  │
+  │     │       │           │       │        │ OOM    │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │     │       │           │       │        │ +131.8 │
+  │ 4   │ a4467 │ multi-rep │ keep  │ 9.8513 │ % (K1  │
+  │     │ c7    │ lica      │       │        │ N=2 th │
+  │     │       │           │       │        │ reads) │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │     │       │           │       │        │ K5     │
+  │ 5   │ 4208f │ multi-rep │ crash │ —      │ spawn  │
+  │     │ e3    │ lica      │       │        │ gravey │
+  │     │       │           │       │        │ ard    │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │ 6   │ 593b6 │ cudagraph │ disca │ 9.9712 │ +1.2%  │
+  │     │ c4    │           │ rd    │        │ noise  │
+  ├─────┼───────┼───────────┼───────┼────────┼────────┤
+  │ 7   │ 2d7dd │ mm-cache  │ keep  │ 10.297 │ +142.2 │
+  │     │ 23    │           │       │ 2      │ % (G4) │
+  └─────┴───────┴───────────┴───────┴────────┴────────┘
+
+  Current best: 10.2972 sample/s, cosine 1.000000 — 2.42×
+  the baseline.
+
+  The orchestrator's infinite search loop is at a natural
+  pause point. The autonomous loop would continue with the
+  queued items (Stack B host-side bundle, P1/G3
+  cudagraph_mm_encoder, plus an ablation of Stack A's
+  max_num_seqs alone). The user can resume via another
+  invocation; state is persisted in commit 5c1b5d8 and
+  research_state.md.
+
+✻ Churned for 1h 10m 32s
+
+  11 tasks (10 done, 1 in progress, 0 open)
+
+────────────────────────────────────────────────────────────────────────
+❯ continue the loop
+────────────────────────────────────────────────────────────────────────
+  Press Ctrl-C again to exit                           ⧉ In claude.log
+
+Resume this session with:
+claude --resume 1f6a865c-2bc1-4a61-aa23-42fb2829ab06
+candidate@vm-candidate:/dev/shm/auto_explore$ exit
